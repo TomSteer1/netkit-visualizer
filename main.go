@@ -6,8 +6,9 @@ import (
 	"bufio"
 	"strings"
 	"os/exec"
-	"github.com/dominikbraun/graph"
-	"github.com/dominikbraun/graph/draw"
+	"bytes"
+  "github.com/goccy/go-graphviz"
+  "github.com/goccy/go-graphviz/cgraph"
 )
 
 
@@ -46,6 +47,7 @@ func main() {
 type Machine struct {
 	Name string
 	Cards map[string]Card
+	Node *cgraph.Node
 }
 
 type Card struct {
@@ -57,6 +59,7 @@ type Card struct {
 type Network struct {
 	Name string
 	Machines []Machine
+	Node *cgraph.Node
 }
 
 func mapMachines() {
@@ -119,31 +122,41 @@ func listNetworks() {
 		fmt.Println(network.Name)
 		for _, machine := range network.Machines {
 			fmt.Println("\t" + machine.Name)
+			fmt.Println("\t\t" + machine.Cards[network.Name].IP)
 		}
 	}
 }
 
 func createGraph() {
 	fmt.Println("Creating Graph...")
-	g := graph.New(graph.StringHash)
-	for _, machine := range machines {
-		g.AddVertex(machine.Name,graph.VertexAttribute("shape", "box"))
+	g := graphviz.New()
+	graph, _ := g.Graph()
+	for key, machine := range machines {
+//		g.AddVertex(machine.Name,graph.VertexAttribute("shape", "box"))
+		m , _ := graph.CreateNode(machine.Name)
+		machine.Node = m
+		m.Set("shape", "box")
+		machines[key] = machine
 	}
-	for _, network := range networks {
-		g.AddVertex(network.Name, graph.VertexAttribute("color","blue"))
-		color := getNextColor()
+	for key, network := range networks {
+//		g.AddVertex(network.Name, graph.VertexAttribute("color","blue"))
+		n, _ :=graph.CreateNode(network.Name)
+		network.Node = n
+		networks[key] = network
+//		color := getNextColor()
 		for _, machine := range network.Machines {
-				g.AddEdge(machine.Name, network.Name, graph.EdgeAttribute("color",color), graph.EdgeAttribute("label",machine.Cards[network.Name].IP))
+					graph.CreateEdge(machine.Cards[network.Name].IP, machines[machine.Name].Node, network.Node)
+//				g.AddEdge(machine.Name, network.Name, graph.EdgeAttribute("color",color), graph.EdgeAttribute("label",machine.Cards[network.Name].IP))
 		}
 	}
+	var buf bytes.Buffer
+	g.Render(graph, "dot", &buf)
+//	image , _ := g.RenderImage(graph)
+	g.RenderFilename(graph, graphviz.PNG, "graph.png")
 
-	// Open Graph
-	file, _ := os.Create("graph.dot")
-	draw.DOT(g, file)
-	exec.Command("dot","-Tpng","graph.dot","-o","graph.png").Run()
-	exec.Command("rm","graph.dot").Run()
-	exec.Command("feh","graph.png").Run()
-	exec.Command("rm","graph.png").Run()
+	exec.Command("feh", "graph.png").Run()
+	exec.Command("rm", "graph.png").Run()
+
 }
 
 var colors = []string{"red", "blue", "green", "yellow", "orange", "purple", "pink", "brown", "grey", "black"}
