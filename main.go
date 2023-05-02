@@ -16,17 +16,17 @@ var machines = make(map[string]Machine)
 var networks = make(map[string]Network)
 
 func main() {
-	fmt.Println("Netkit Visualizer")
-	fmt.Println("Version 0.1")
-	fmt.Println("")
-	fmt.Println("Checking for config file...")
+	fmt.Fprintln(os.Stderr,"Netkit Visualizer")
+	fmt.Fprintln(os.Stderr,"Version 0.1")
+	fmt.Fprintln(os.Stderr,"")
+	fmt.Fprintln(os.Stderr,"Checking for config file...")
 	if testForFile("lab.conf") {
 		mapMachines()
 		menuOptions := []string{"List Networks", "Create Graph"}
 		for option := range menuOptions {
-			fmt.Println(option+1, menuOptions[option])
+			fmt.Fprintln(os.Stderr,option+1, menuOptions[option])
 		}
-		fmt.Println("Please select an option:")
+		fmt.Fprintln(os.Stderr,"Please select an option:")
 		var input string
 		fmt.Scanln(&input)
 		switch input {
@@ -35,10 +35,10 @@ func main() {
 			case "2":
 				createGraph()
 			default:
-					fmt.Println("Invalid option")
+					fmt.Fprintln(os.Stderr,"Invalid option")
 		}
 	} else {
-		fmt.Println("Config file not found. Exiting.")
+		fmt.Fprintln(os.Stderr,"Config file not found. Exiting.")
 		os.Exit(1)
 	}
 	os.Exit(0)
@@ -63,7 +63,7 @@ type Network struct {
 }
 
 func mapMachines() {
-	fmt.Println("Loading Config File...")
+	fmt.Fprintln(os.Stderr,"Loading Config File...")
 	configFile, err := os.Open("lab.conf")
 	HandleError(err)
 	defer configFile.Close()
@@ -128,7 +128,7 @@ func listNetworks() {
 }
 
 func createGraph() {
-	fmt.Println("Creating Graph...")
+	fmt.Fprintln(os.Stderr,"Creating Graph...")
 	g := graphviz.New()
 	graph, _ := g.Graph()
 	for key, machine := range machines {
@@ -191,7 +191,7 @@ func contains(slice []string, item string) bool {
 
 func HandleError(err error) {
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr,err)
 		os.Exit(1)
 	}
 }
